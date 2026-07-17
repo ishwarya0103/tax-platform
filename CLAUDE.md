@@ -3,7 +3,11 @@
 ## What this is
 A frontend prototype for GreenGrowth CPAs' AI Engineer case study: designing pieces of an
 AI-powered tax platform for CPAs and their clients, from scratch. No specific challenges were
-assigned to me — I'm building all 10 from the brief's "Overview of Challenges."
+assigned to me — I'm building 7 of the 10 challenges from the brief's Overview of Challenges,
+prioritizing depth over coverage: 07 (Actionable Dashboard), 01 (Source Document Traceability),
+10 (Trustworthy AI), 08 (Clickable vs. Editable), 06 (Return Status & Progress), 05 (Role-Aware
+Experiences), and 03 (Where to Start). The remaining three (02 Collaboration, 04 Navigation, 09
+Complexity at Scale) are stretch goals only if time allows after the core 7 are done well.
 
 ## Ground rules from the brief
 - The frontend is what's graded — visual design, interaction design, IA, UX quality.
