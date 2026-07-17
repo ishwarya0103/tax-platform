@@ -2,16 +2,9 @@ import { CircleAlert, MessageCircleQuestion } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { ReturnStatusBadge, StageTimeline, Tooltip } from '../../design-system'
 import { dueDateLabel, dueDateRelativeLabel, daysUntilDue } from '../../lib/scoring'
+import { ENTITY_TYPE_LABELS } from '../../lib/labels'
 import type { ReturnScore } from '../../lib/scoring'
-import type { Client, EntityType, Return, TeamMember } from '../../types'
-
-const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
-  individual: 'Individual',
-  's-corp': 'S-Corp',
-  'c-corp': 'C-Corp',
-  partnership: 'Partnership',
-  trust: 'Trust',
-}
+import type { Client, Return, TeamMember } from '../../types'
 
 function ScoreChip({ score }: { score: ReturnScore }) {
   const tier =
