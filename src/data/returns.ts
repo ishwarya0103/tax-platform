@@ -242,6 +242,13 @@ export const returns: Return[] = [
         editHistory: [],
       },
       {
+        // This field will also report "could not confirm" from the traceability checker —
+        // expected, not a bug. The value is a *computed* net gain (proceeds minus cost basis);
+        // the snippet only shows those two raw inputs, never the computed difference itself,
+        // so no literal text match is possible here regardless of formatting. Deliberately not
+        // "fixed" by adding a fabricated net-gain line to the snippet — that would hide a real,
+        // honest limitation of plain text matching (it can't verify arithmetic) instead of
+        // letting the check demonstrate it.
         id: 'field-marcus-capital-gains',
         formLine: 'Form 1040, Schedule D',
         label: 'Net capital gain (loss)',
@@ -339,6 +346,10 @@ export const returns: Return[] = [
         editHistory: [],
       },
       {
+        // This field will also report "could not confirm" from the traceability checker —
+        // expected, not a bug. Its value was always an AI *estimate* from a partially
+        // illegible photo (see aiConfidence/warnings below), so by design it can't appear
+        // verbatim in the source text the way a clean copy-paste value would.
         id: 'field-dana-mileage-deduction',
         formLine: 'Schedule C, Line 9',
         label: 'Vehicle mileage deduction',
@@ -373,10 +384,21 @@ export const returns: Return[] = [
         ],
       },
       {
+        // Deliberate mismatch, injected for the traceability checker (src/lib/traceability.ts)
+        // to catch — this is the one intentional case in the mock data, not a bug. The value
+        // below (621.47) has its middle two digits transposed from what the source snippet
+        // actually says (612.47), simulating a realistic data-entry slip. `state` stays
+        // 'verified' and `aiConfidence` stays high on purpose: the point is that a plain,
+        // independent text match catches this even though the AI was confident AND a human
+        // preparer already signed off on it — proving the check is a genuinely separate
+        // signal, not just a redundant restatement of either one. The edit-history entry
+        // below is updated to match (its `note` still says "confirmed", because that's
+        // exactly the failure mode: the historical record claims this was checked and fine,
+        // but the number doesn't match the cited source text).
         id: 'field-dana-supplies-expense',
         formLine: 'Schedule C, Line 22',
         label: 'Supplies expense',
-        value: '612.47',
+        value: '621.47',
         state: 'verified',
         source: {
           documentId: 'doc-dana-suppliesreceipts',
@@ -394,7 +416,7 @@ export const returns: Return[] = [
             actorType: 'preparer',
             actorName: 'Tom Delgado',
             previousValue: '612.47',
-            newValue: '612.47',
+            newValue: '621.47',
             note: 'Cross-checked against individual receipts; confirmed.',
           },
         ],

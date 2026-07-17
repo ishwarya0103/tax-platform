@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { CircleAlert, FileText, Info, Lock, Pencil, type LucideIcon } from 'lucide-react'
+import { CheckCircle2, CircleAlert, FileText, Info, Lock, Pencil, type LucideIcon } from 'lucide-react'
 import { documents } from '../../data'
 import { FieldStateBadge } from '../../design-system'
 import { formatDateTime } from '../../lib/format'
+import { valueAppearsInSnippet } from '../../lib/traceability'
 import type { EditHistoryEntry, FieldWarning, FieldWarningSeverity, ReturnField } from '../../types'
 
 const WARNING_STYLES: Record<FieldWarningSeverity, { className: string; icon: LucideIcon }> = {
@@ -37,6 +38,27 @@ function ConfidenceMeter({ value }: { value: number }) {
       <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
         <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  )
+}
+
+// A binary badge, deliberately not a meter/percentage like ConfidenceMeter above
+// it — this is a different KIND of signal (a plain textual fact-check, not a
+// graduated self-reported belief), and the flat shape says so before the color
+// or copy does.
+function TraceabilityCheck({ field }: { field: ReturnField }) {
+  if (!field.source) return null
+  const matched = valueAppearsInSnippet(field.value, field.source.snippet)
+
+  return matched ? (
+    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+      <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+      <span>Verified against source text</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+      <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+      <span>Could not confirm this exact figure in the cited source</span>
     </div>
   )
 }
@@ -168,6 +190,18 @@ export function FieldDetail({ field, onSave }: FieldDetailProps) {
               <ConfidenceMeter value={field.aiConfidence} />
             </div>
             {field.aiReasoning && <p className="mt-3 text-sm text-slate-700">{field.aiReasoning}</p>}
+          </section>
+        )}
+
+        {field.source && (
+          <section className="mt-6">
+            <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Traceability check</h3>
+            <p className="mt-1 text-xs text-slate-400">
+              An independent, deterministic check of the cited text — not the AI's own confidence score.
+            </p>
+            <div className="mt-2">
+              <TraceabilityCheck field={field} />
+            </div>
           </section>
         )}
 
