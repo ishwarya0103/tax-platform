@@ -5,6 +5,7 @@ import { StageTimeline } from '../design-system'
 import { dueDateLabel, dueDateRelativeLabel } from '../lib/scoring'
 import { ENTITY_TYPE_LABELS } from '../lib/labels'
 import { ClientFieldRow } from '../components/portal/ClientFieldRow'
+import { NewClientOnboarding } from '../components/portal/NewClientOnboarding'
 
 export function ClientPortal() {
   const { portalClientId } = usePortalSession()
@@ -21,6 +22,14 @@ export function ClientPortal() {
   }
 
   const preparer = teamMembers.find((tm) => tm.id === ret.preparerId)
+
+  // A brand-new client with no return activity yet gets a fundamentally
+  // different first-time experience — one next action and a short
+  // checklist — rather than an emptier version of the standard status page.
+  if (client.isNewClient) {
+    return <NewClientOnboarding client={client} preparer={preparer} taxYear={ret.taxYear} />
+  }
+
   // Blocking issues are internal firm process notes and never shown here.
   // Open questions the firm asked the client are the one thing worth
   // surfacing — they're the reason "client action needed" appears at all.

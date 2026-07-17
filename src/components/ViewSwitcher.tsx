@@ -4,11 +4,13 @@ import { clients } from '../data'
 
 // A couple of hardcoded sample logins standing in for real client auth, per
 // the brief. Priya Nair is included deliberately — she's a firm employee with
-// her own personal return, prepared by a colleague rather than herself.
+// her own personal return, prepared by a colleague rather than herself. New
+// Horizons Bakery demonstrates the brand-new-client, no-activity-yet case.
 const SAMPLE_CLIENT_LOGINS: { id: string; note?: string }[] = [
   { id: 'client-sarah-chen' },
   { id: 'client-dana-ruiz' },
   { id: 'client-priya-nair', note: 'firm employee' },
+  { id: 'client-new-horizons-bakery', note: 'new client' },
 ]
 
 export function ViewSwitcher() {
