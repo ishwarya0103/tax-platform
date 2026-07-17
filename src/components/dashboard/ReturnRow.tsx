@@ -1,6 +1,6 @@
 import { CircleAlert, MessageCircleQuestion } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { ReturnStatusBadge, Tooltip } from '../../design-system'
+import { ReturnStatusBadge, StageTimeline, Tooltip } from '../../design-system'
 import { dueDateLabel, dueDateRelativeLabel, daysUntilDue } from '../../lib/scoring'
 import type { ReturnScore } from '../../lib/scoring'
 import type { Client, EntityType, Return, TeamMember } from '../../types'
@@ -100,6 +100,10 @@ export function ReturnRow({ ret, client, preparer, reviewer, score }: ReturnRowP
 
       <div className="w-44 shrink-0">
         <ReturnStatusBadge status={ret.status} />
+      </div>
+
+      <div className="shrink-0">
+        <StageTimeline status={ret.status} compact />
       </div>
 
       <div className="w-40 shrink-0">

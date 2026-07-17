@@ -1,6 +1,8 @@
 export { FieldStateBadge } from './FieldStateBadge'
 export { ReturnStatusBadge } from './ReturnStatusBadge'
 export { StatusBadge } from './StatusBadge'
+export { StageTimeline } from './StageTimeline'
+export type { TimelineStage } from './StageTimeline'
 export { Tooltip, TooltipProvider } from './Tooltip'
 export { FIELD_STATE_CONFIG, RETURN_STATUS_CONFIG } from './tokens'
 export type { StatusVisual } from './tokens'

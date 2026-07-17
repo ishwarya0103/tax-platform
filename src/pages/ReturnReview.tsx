@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { clients, teamMembers } from '../data'
 import { useReturnsData } from '../context/ReturnsDataContext'
 import { useCurrentUser } from '../context/CurrentUserContext'
-import { ReturnStatusBadge } from '../design-system'
+import { ReturnStatusBadge, StageTimeline } from '../design-system'
 import { dueDateLabel, dueDateRelativeLabel } from '../lib/scoring'
 import { FieldList } from '../components/return-review/FieldList'
 import { FieldDetail } from '../components/return-review/FieldDetail'
@@ -61,6 +61,9 @@ export function ReturnReview() {
               {reviewer && <span className="ml-2">Reviewer: {reviewer.name}</span>}
             </div>
           </div>
+        </div>
+        <div className="mt-4 max-w-xl">
+          <StageTimeline status={ret.status} />
         </div>
       </header>
 
