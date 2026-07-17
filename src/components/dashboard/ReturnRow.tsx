@@ -1,4 +1,5 @@
 import { CircleAlert, MessageCircleQuestion } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { ReturnStatusBadge, Tooltip } from '../../design-system'
 import { dueDateLabel, dueDateRelativeLabel, daysUntilDue } from '../../lib/scoring'
 import type { ReturnScore } from '../../lib/scoring'
@@ -78,7 +79,10 @@ export function ReturnRow({ ret, client, preparer, reviewer, score }: ReturnRowP
     ret.status === 'filed' ? 'text-slate-400' : days < 0 ? 'text-rose-600' : days <= 7 ? 'text-amber-600' : 'text-slate-500'
 
   return (
-    <div className="flex items-center gap-4 border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50">
+    <Link
+      to={`/returns/${ret.id}`}
+      className="flex items-center gap-4 border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50"
+    >
       {ret.status === 'filed' ? (
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-[11px] font-medium text-slate-400">
           Done
@@ -122,6 +126,6 @@ export function ReturnRow({ ret, client, preparer, reviewer, score }: ReturnRowP
         {preparer && <Avatar member={preparer} role="Preparer" />}
         {reviewer && <Avatar member={reviewer} role="Reviewer" />}
       </div>
-    </div>
+    </Link>
   )
 }

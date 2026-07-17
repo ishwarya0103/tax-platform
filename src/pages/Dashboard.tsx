@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Ban, CalendarClock, CalendarX2, ClipboardCheck, Search, type LucideIcon } from 'lucide-react'
-import { clients, teamMembers, returns } from '../data'
+import { clients, teamMembers } from '../data'
 import { useCurrentUser } from '../context/CurrentUserContext'
+import { useReturnsData } from '../context/ReturnsDataContext'
 import { daysUntilDue, scoreReturn } from '../lib/scoring'
 import { StatCard } from '../components/dashboard/StatCard'
 import { ReturnRow } from '../components/dashboard/ReturnRow'
@@ -59,6 +60,7 @@ function matchesSearch(ret: Return, clientName: string, query: string): boolean 
 
 export function Dashboard() {
   const { currentUser, setCurrentUserId } = useCurrentUser()
+  const { returns } = useReturnsData()
   const [scope, setScope] = useState<Scope>('mine')
   const [statFilter, setStatFilter] = useState<StatKey | null>(null)
   const [query, setQuery] = useState('')

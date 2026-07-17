@@ -4,6 +4,10 @@ import type { IssueSeverity, Return, ReturnStatus } from '../types'
 // the dataset was authored assuming "today" is mid-July 2026, on extension season.
 export const TODAY = new Date('2026-07-17T00:00:00Z')
 
+export function nowISO(): string {
+  return TODAY.toISOString()
+}
+
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 function daysUntil(dateStr: string, from: Date): number {
