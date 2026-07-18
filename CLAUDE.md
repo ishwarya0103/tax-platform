@@ -25,5 +25,6 @@ React + TypeScript + Vite + Tailwind CSS v4 + React Router. No backend, no datab
 - One shared design system for state badges (AI-generated / verified / locked / editable) —
   every screen imports from it, nobody invents one-off styling.
 - Commit after each phase is working, not at the end.
-- PROGRESS.md is a running log, updated (current status + a new dated entry) as the last step
-  of every phase, right before committing. This file (CLAUDE.md) stays static ground rules only.
+- A local PROGRESS.md is maintained for session continuity, not committed — updated (current
+  status + a new dated entry) as the last step of every phase. This file (CLAUDE.md) stays
+  static ground rules only.

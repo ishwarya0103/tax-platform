@@ -25,3 +25,6 @@ dist-ssr
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Local session-continuity log, not part of project history
+PROGRESS.md
