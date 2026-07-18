@@ -4,10 +4,12 @@ import { ArrowLeft } from 'lucide-react'
 import { clients, teamMembers } from '../data'
 import { useReturnsData } from '../context/ReturnsDataContext'
 import { useCurrentUser } from '../context/CurrentUserContext'
+import { useMessageThreads } from '../context/MessageThreadsContext'
 import { ReturnStatusBadge, StageTimeline } from '../design-system'
 import { dueDateLabel, dueDateRelativeLabel } from '../lib/scoring'
 import { FieldList } from '../components/return-review/FieldList'
 import { FieldDetail } from '../components/return-review/FieldDetail'
+import { MessageThreadList } from '../components/return-review/MessageThreadList'
 import type { EditActorType, StaffRole } from '../types'
 
 function roleToActorType(role: StaffRole): EditActorType {
@@ -19,6 +21,7 @@ export function ReturnReview() {
   const { returnId } = useParams<{ returnId: string }>()
   const { getReturn, saveFieldValue } = useReturnsData()
   const { currentUser } = useCurrentUser()
+  const { messageThreads, toggleThreadStatus } = useMessageThreads()
   const ret = returnId ? getReturn(returnId) : undefined
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(ret?.fields[0]?.id ?? null)
 
@@ -39,9 +42,10 @@ export function ReturnReview() {
   const preparer = teamMembers.find((tm) => tm.id === ret.preparerId)
   const reviewer = ret.reviewerId ? teamMembers.find((tm) => tm.id === ret.reviewerId) : undefined
   const selectedField = ret.fields.find((f) => f.id === selectedFieldId) ?? ret.fields[0]
+  const threadsForReturn = messageThreads.filter((t) => t.returnId === ret.id)
 
   return (
-    <div className="flex min-h-svh flex-col bg-slate-50">
+    <div className="min-h-svh bg-slate-50">
       <header className="border-b border-slate-200 bg-white px-6 py-4">
         <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700">
           <ArrowLeft className="size-4" aria-hidden="true" />
@@ -68,11 +72,9 @@ export function ReturnReview() {
       </header>
 
       {ret.fields.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
-          No fields have been built out for this return yet.
-        </div>
+        <div className="px-6 py-10 text-center text-sm text-slate-400">No fields have been built out for this return yet.</div>
       ) : (
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex h-[560px] overflow-hidden border-b border-slate-200">
           <FieldList fields={ret.fields} selectedFieldId={selectedField?.id ?? null} onSelect={setSelectedFieldId} />
           {selectedField && (
             <FieldDetail
@@ -88,6 +90,8 @@ export function ReturnReview() {
           )}
         </div>
       )}
+
+      <MessageThreadList threads={threadsForReturn} fields={ret.fields} onToggleStatus={toggleThreadStatus} />
     </div>
   )
 }

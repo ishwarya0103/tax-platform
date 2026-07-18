@@ -4,7 +4,7 @@ import { ReturnStatusBadge, StageTimeline, Tooltip } from '../../design-system'
 import { dueDateLabel, dueDateRelativeLabel, daysUntilDue } from '../../lib/scoring'
 import { ENTITY_TYPE_LABELS } from '../../lib/labels'
 import type { ReturnScore } from '../../lib/scoring'
-import type { Client, Return, TeamMember } from '../../types'
+import type { Client, MessageThread, Return, TeamMember } from '../../types'
 
 function ScoreChip({ score }: { score: ReturnScore }) {
   const tier =
@@ -62,12 +62,15 @@ interface ReturnRowProps {
   preparer?: TeamMember
   reviewer?: TeamMember
   score: ReturnScore
+  threads: MessageThread[]
 }
 
-export function ReturnRow({ ret, client, preparer, reviewer, score }: ReturnRowProps) {
+export function ReturnRow({ ret, client, preparer, reviewer, score, threads }: ReturnRowProps) {
   const days = daysUntilDue(ret)
   const unresolvedIssues = ret.blockingIssues.filter((issue) => !issue.resolved).length
-  const openQuestions = ret.openQuestions.filter((q) => q.status === 'open').length
+  // Counts every open thread, internal or client-visible — an unresolved
+  // internal discussion is still something the preparer should notice here.
+  const openThreads = threads.filter((t) => t.status === 'open').length
   const dueTone =
     ret.status === 'filed' ? 'text-slate-400' : days < 0 ? 'text-rose-600' : days <= 7 ? 'text-amber-600' : 'text-slate-500'
 
@@ -111,10 +114,10 @@ export function ReturnRow({ ret, client, preparer, reviewer, score }: ReturnRowP
             {unresolvedIssues}
           </span>
         )}
-        {openQuestions > 0 && (
+        {openThreads > 0 && (
           <span className="flex items-center gap-1 text-violet-600">
             <MessageCircleQuestion className="size-3.5" aria-hidden="true" />
-            {openQuestions}
+            {openThreads}
           </span>
         )}
       </div>

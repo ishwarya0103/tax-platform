@@ -1,15 +1,18 @@
 import { usePortalSession } from '../context/PortalSessionContext'
 import { useReturnsData } from '../context/ReturnsDataContext'
+import { useMessageThreads } from '../context/MessageThreadsContext'
 import { clients, teamMembers } from '../data'
 import { StageTimeline } from '../design-system'
 import { dueDateLabel, dueDateRelativeLabel } from '../lib/scoring'
 import { ENTITY_TYPE_LABELS } from '../lib/labels'
+import { threadsNeedingClientAction } from '../lib/messages'
 import { ClientFieldRow } from '../components/portal/ClientFieldRow'
 import { NewClientOnboarding } from '../components/portal/NewClientOnboarding'
 
 export function ClientPortal() {
   const { portalClientId } = usePortalSession()
   const { returns } = useReturnsData()
+  const { messageThreads } = useMessageThreads()
   const client = clients.find((c) => c.id === portalClientId)
   const ret = returns.find((r) => r.clientId === portalClientId)
 
@@ -31,9 +34,13 @@ export function ClientPortal() {
   }
 
   // Blocking issues are internal firm process notes and never shown here.
-  // Open questions the firm asked the client are the one thing worth
-  // surfacing — they're the reason "client action needed" appears at all.
-  const questionsForClient = ret.openQuestions.filter((q) => q.status === 'open' && q.askedBy !== 'client')
+  // Real message threads back this section now, not a static list — internal
+  // threads are filtered out by construction (threadsNeedingClientAction only
+  // ever returns client-visible ones), and only threads where it's genuinely
+  // the client's turn show up, which is exactly the reason "client action
+  // needed" appears on the return at all.
+  const threadsForReturn = messageThreads.filter((t) => t.returnId === ret.id)
+  const threadsForClient = threadsNeedingClientAction(threadsForReturn)
 
   return (
     <div className="min-h-svh bg-slate-50">
@@ -56,14 +63,21 @@ export function ClientPortal() {
           </section>
         )}
 
-        {questionsForClient.length > 0 && (
+        {threadsForClient.length > 0 && (
           <section className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
             <h2 className="text-sm font-semibold text-amber-900">What we need from you</h2>
-            <ul className="mt-2 space-y-2 text-sm text-amber-800">
-              {questionsForClient.map((q) => (
-                <li key={q.id}>{q.question}</li>
+            <div className="mt-2 space-y-3">
+              {threadsForClient.map((thread) => (
+                <div key={thread.id}>
+                  <p className="text-sm font-medium text-amber-900">{thread.subject}</p>
+                  <ul className="mt-1 space-y-1 text-sm text-amber-800">
+                    {thread.messages.map((message) => (
+                      <li key={message.id}>{message.body}</li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         )}
 

@@ -44,18 +44,33 @@ export interface BlockingIssue {
   resolved: boolean
 }
 
-export type QuestionAskedBy = 'preparer' | 'reviewer' | 'client'
+// A thread is either entirely internal (only firm staff ever post or see it) or
+// entirely client-visible — visibility lives on the thread, not per-message,
+// because mixing the two within one conversation is exactly the leak this
+// model exists to prevent.
+export type MessageVisibility = 'internal' | 'client-visible'
+export type MessageAuthorType = 'preparer' | 'reviewer' | 'client'
+export type ThreadStatus = 'open' | 'answered'
 
-export interface OpenQuestion {
+export interface Message {
   id: string
-  question: string
-  askedBy: QuestionAskedBy
-  askedByName: string
-  relatedFieldId?: string
+  authorType: MessageAuthorType
+  authorName: string
+  body: string
   createdAt: string
-  status: 'open' | 'answered'
-  answer?: string
-  answeredAt?: string
+}
+
+export interface MessageThread {
+  id: string
+  returnId: string
+  subject: string
+  visibility: MessageVisibility
+  status: ThreadStatus
+  relatedFieldId?: string
+  relatedDocumentId?: string
+  messages: Message[]
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Return {
@@ -69,7 +84,6 @@ export interface Return {
   preparerId: string
   reviewerId?: string
   blockingIssues: BlockingIssue[]
-  openQuestions: OpenQuestion[]
   fields: ReturnField[]
   createdAt: string
   updatedAt: string

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { scoreReturn, TODAY } from './scoring'
-import { returns } from '../data'
-import type { BlockingIssue, OpenQuestion, Return, ReturnStatus } from '../types'
+import { returns, messageThreads } from '../data'
+import type { BlockingIssue, Message, MessageThread, Return, ReturnStatus } from '../types'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
@@ -19,7 +19,6 @@ function makeReturn(overrides: Partial<Return> = {}): Return {
     dueDate: dateOffsetFromToday(0),
     preparerId: 'tm-test',
     blockingIssues: [],
-    openQuestions: [],
     fields: [],
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
@@ -38,14 +37,27 @@ function makeIssue(overrides: Partial<BlockingIssue> = {}): BlockingIssue {
   }
 }
 
-function makeQuestion(overrides: Partial<OpenQuestion> = {}): OpenQuestion {
+function makeMessage(overrides: Partial<Message> = {}): Message {
   return {
-    id: 'question-test',
-    question: 'test question',
-    askedBy: 'preparer',
-    askedByName: 'Test Preparer',
+    id: 'msg-test',
+    authorType: 'preparer',
+    authorName: 'Test Preparer',
+    body: 'test message',
     createdAt: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+function makeThread(overrides: Partial<MessageThread> = {}): MessageThread {
+  return {
+    id: 'thread-test',
+    returnId: 'ret-test',
+    subject: 'test thread',
+    visibility: 'client-visible',
     status: 'open',
+    messages: [makeMessage()],
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
     ...overrides,
   }
 }
@@ -173,68 +185,62 @@ describe('scoreReturn — blocking issue weighting', () => {
   })
 })
 
-describe('scoreReturn — open question weighting', () => {
-  it('adds nothing when there are no open questions', () => {
-    const score = scoreReturn(makeReturn({ openQuestions: [] }))
+describe('scoreReturn — open client-visible thread weighting', () => {
+  it('adds nothing when there are no threads', () => {
+    const score = scoreReturn(makeReturn(), [])
     expect(score.reasons.some((r) => r.label.includes('reply'))).toBe(false)
   })
 
-  it('weighs a question the firm asked the client at 3 points', () => {
-    const score = scoreReturn(
-      makeReturn({ dueDate: dateOffsetFromToday(90), openQuestions: [makeQuestion({ askedBy: 'preparer' })] }),
-    )
+  it('weighs a thread where the firm sent the last message at 3 points (client owes a reply)', () => {
+    const thread = makeThread({ messages: [makeMessage({ authorType: 'preparer' })] })
+    const score = scoreReturn(makeReturn({ dueDate: dateOffsetFromToday(90) }), [thread])
     expect(score.total).toBe(3)
     expect(score.reasons.find((r) => r.label.includes('reply'))?.label).toBe("1 awaiting the client's reply")
   })
 
-  it('weighs a question the client asked the firm at 10 points', () => {
-    const score = scoreReturn(
-      makeReturn({ dueDate: dateOffsetFromToday(90), openQuestions: [makeQuestion({ askedBy: 'client' })] }),
-    )
+  it('weighs a thread where the client sent the last message at 10 points (firm owes a reply)', () => {
+    const thread = makeThread({ messages: [makeMessage({ authorType: 'client' })] })
+    const score = scoreReturn(makeReturn({ dueDate: dateOffsetFromToday(90) }), [thread])
     expect(score.total).toBe(10)
     expect(score.reasons.find((r) => r.label.includes('reply'))?.label).toBe('1 from the client awaiting your reply')
   })
 
   it('combines both directions in one label', () => {
-    const score = scoreReturn(
-      makeReturn({
-        dueDate: dateOffsetFromToday(90),
-        openQuestions: [
-          makeQuestion({ askedBy: 'client' }),
-          makeQuestion({ askedBy: 'preparer' }),
-          makeQuestion({ askedBy: 'reviewer' }),
-        ],
-      }),
-    )
+    const threads = [
+      makeThread({ id: 't1', messages: [makeMessage({ authorType: 'client' })] }),
+      makeThread({ id: 't2', messages: [makeMessage({ authorType: 'preparer' })] }),
+      makeThread({ id: 't3', messages: [makeMessage({ authorType: 'reviewer' })] }),
+    ]
+    const score = scoreReturn(makeReturn({ dueDate: dateOffsetFromToday(90) }), threads)
     expect(score.total).toBe(16) // 10 + 3 + 3
     expect(score.reasons.find((r) => r.label.includes('reply'))?.label).toBe(
       "1 from the client awaiting your reply; 2 awaiting the client's reply",
     )
   })
 
-  it('ignores answered questions', () => {
-    const score = scoreReturn(
-      makeReturn({
-        dueDate: dateOffsetFromToday(90),
-        openQuestions: [makeQuestion({ askedBy: 'client', status: 'answered' }), makeQuestion({ askedBy: 'preparer' })],
-      }),
-    )
-    expect(score.total).toBe(3) // only the still-open, firm-asked question counts
+  it('ignores answered threads', () => {
+    const threads = [
+      makeThread({ id: 't1', status: 'answered', messages: [makeMessage({ authorType: 'client' })] }),
+      makeThread({ id: 't2', messages: [makeMessage({ authorType: 'preparer' })] }),
+    ]
+    const score = scoreReturn(makeReturn({ dueDate: dateOffsetFromToday(90) }), threads)
+    expect(score.total).toBe(3) // only the still-open thread counts
     expect(score.reasons.find((r) => r.label.includes('reply'))?.label).toBe("1 awaiting the client's reply")
   })
 
-  it('caps the open-question contribution at 30 points', () => {
-    const score = scoreReturn(
-      makeReturn({
-        dueDate: dateOffsetFromToday(90),
-        openQuestions: [
-          makeQuestion({ askedBy: 'client' }),
-          makeQuestion({ askedBy: 'client' }),
-          makeQuestion({ askedBy: 'client' }),
-          makeQuestion({ askedBy: 'client' }),
-        ],
-      }),
-    )
+  it('ignores internal threads entirely, regardless of who owes a reply', () => {
+    const threads = [
+      makeThread({ id: 't1', visibility: 'internal', messages: [makeMessage({ authorType: 'preparer' })] }),
+      makeThread({ id: 't2', visibility: 'internal', messages: [makeMessage({ authorType: 'reviewer' })] }),
+    ]
+    const score = scoreReturn(makeReturn({ dueDate: dateOffsetFromToday(90) }), threads)
+    expect(score.reasons.some((r) => r.label.includes('reply'))).toBe(false)
+    expect(score.total).toBe(0)
+  })
+
+  it('caps the open-thread contribution at 30 points', () => {
+    const threads = [1, 2, 3, 4].map((n) => makeThread({ id: `t${n}`, messages: [makeMessage({ authorType: 'client' })] }))
+    const score = scoreReturn(makeReturn({ dueDate: dateOffsetFromToday(90) }), threads)
     expect(score.total).toBe(30) // 40 raw, capped at 30
   })
 })
@@ -283,13 +289,14 @@ describe('scoreReturn — status modifiers', () => {
   })
 
   it('short-circuits filed returns to a fixed sentinel score, ignoring everything else', () => {
+    const thread = makeThread({ messages: [makeMessage({ authorType: 'client' })] })
     const score = scoreReturn(
       makeReturn({
         status: 'filed',
         dueDate: dateOffsetFromToday(-100), // severely overdue
         blockingIssues: [makeIssue({ severity: 'high' })], // and blocked
-        openQuestions: [makeQuestion({ askedBy: 'client' })], // and a client question pending
       }),
+      [thread], // and a client message pending
     )
     expect(score.total).toBe(-1)
     expect(score.reasons).toHaveLength(1)
@@ -298,27 +305,42 @@ describe('scoreReturn — status modifiers', () => {
 })
 
 describe('scoreReturn — end-to-end against real mock data', () => {
+  function threadsFor(returnId: string) {
+    return messageThreads.filter((t) => t.returnId === returnId)
+  }
+
   it('scores Carlos Mendoza (severely overdue, blocked, no extension) as the highest-priority return', () => {
     const carlos = returns.find((r) => r.id === 'ret-carlos-mendoza-2025')
     expect(carlos).toBeDefined()
-    expect(scoreReturn(carlos!).total).toBe(88)
+    expect(scoreReturn(carlos!, threadsFor(carlos!.id)).total).toBe(88)
   })
 
   it('scores Owen Ridgeline (client-action-needed) below the neutral baseline', () => {
     const owen = returns.find((r) => r.id === 'ret-owen-ridgeline-2025')
     expect(owen).toBeDefined()
-    expect(scoreReturn(owen!).total).toBe(-17)
+    expect(scoreReturn(owen!, threadsFor(owen!.id)).total).toBe(-17)
   })
 
   it('scores a filed return (Ridgeline Landscaping LLC) at the fixed sentinel', () => {
     const ridgeline = returns.find((r) => r.id === 'ret-ridgeline-landscaping-2025')
     expect(ridgeline).toBeDefined()
-    expect(scoreReturn(ridgeline!).total).toBe(-1)
+    expect(scoreReturn(ridgeline!, threadsFor(ridgeline!.id)).total).toBe(-1)
   })
 
   it('scores a clean, on-track return (Sarah Chen) at neutral zero', () => {
     const sarah = returns.find((r) => r.id === 'ret-sarah-chen-2025')
     expect(sarah).toBeDefined()
-    expect(scoreReturn(sarah!).total).toBe(0)
+    expect(scoreReturn(sarah!, threadsFor(sarah!.id)).total).toBe(0)
+  })
+
+  it("scores Marcus Webb counting only his client-visible thread, not the internal one", () => {
+    // blocking issue (15) + in-review modifier (5) + the client-visible thread where the
+    // firm sent the last message, so the client owes a reply (3) = 23. The internal thread
+    // discussing how to resolve the conflict must NOT add to this — it's firm-only.
+    const marcus = returns.find((r) => r.id === 'ret-marcus-webb-2025')
+    expect(marcus).toBeDefined()
+    const threads = threadsFor(marcus!.id)
+    expect(threads.some((t) => t.visibility === 'internal')).toBe(true)
+    expect(scoreReturn(marcus!, threads).total).toBe(23)
   })
 })

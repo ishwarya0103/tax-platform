@@ -1,4 +1,5 @@
-import type { IssueSeverity, Return, ReturnStatus } from '../types'
+import { nextActionOwner } from './messages'
+import type { IssueSeverity, MessageThread, Return, ReturnStatus } from '../types'
 
 // Pinned to match the mock data's tax season rather than the real system clock —
 // the dataset was authored assuming "today" is mid-July 2026, on extension season.
@@ -79,7 +80,7 @@ const STATUS_MODIFIERS: Partial<Record<ReturnStatus, ScoreReason>> = {
   },
 }
 
-export function scoreReturn(ret: Return, from: Date = TODAY): ReturnScore {
+export function scoreReturn(ret: Return, threads: MessageThread[] = [], from: Date = TODAY): ReturnScore {
   if (ret.status === 'filed') {
     return { total: -1, reasons: [{ label: 'Filed — no further action needed', points: -1 }] }
   }
@@ -124,14 +125,17 @@ export function scoreReturn(ret: Return, from: Date = TODAY): ReturnScore {
     })
   }
 
-  const openQuestions = ret.openQuestions.filter((q) => q.status === 'open')
-  if (openQuestions.length > 0) {
-    const fromClient = openQuestions.filter((q) => q.askedBy === 'client').length
-    const fromFirm = openQuestions.length - fromClient
-    const points = Math.min(fromClient * 10 + fromFirm * 3, 30)
+  // Only client-visible threads count here — internal firm discussion isn't
+  // "waiting on someone" in the client-facing sense the rest of this component
+  // is about, and it's already reflected via blockingIssues where relevant.
+  const openClientThreads = threads.filter((t) => t.visibility === 'client-visible' && t.status === 'open')
+  if (openClientThreads.length > 0) {
+    const firmOwes = openClientThreads.filter((t) => nextActionOwner(t) === 'firm').length
+    const clientOwes = openClientThreads.length - firmOwes
+    const points = Math.min(firmOwes * 10 + clientOwes * 3, 30)
     const parts: string[] = []
-    if (fromClient > 0) parts.push(`${fromClient} from the client awaiting your reply`)
-    if (fromFirm > 0) parts.push(`${fromFirm} awaiting the client's reply`)
+    if (firmOwes > 0) parts.push(`${firmOwes} from the client awaiting your reply`)
+    if (clientOwes > 0) parts.push(`${clientOwes} awaiting the client's reply`)
     reasons.push({ label: parts.join('; '), points })
   }
 

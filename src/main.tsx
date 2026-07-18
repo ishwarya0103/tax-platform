@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { TooltipProvider } from './design-system'
 import { CurrentUserProvider } from './context/CurrentUserContext'
 import { ReturnsDataProvider } from './context/ReturnsDataContext'
+import { MessageThreadsProvider } from './context/MessageThreadsContext'
 import { PortalSessionProvider } from './context/PortalSessionContext'
 import './index.css'
 import App from './App.tsx'
@@ -13,11 +14,13 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <TooltipProvider>
         <ReturnsDataProvider>
-          <CurrentUserProvider>
-            <PortalSessionProvider>
-              <App />
-            </PortalSessionProvider>
-          </CurrentUserProvider>
+          <MessageThreadsProvider>
+            <CurrentUserProvider>
+              <PortalSessionProvider>
+                <App />
+              </PortalSessionProvider>
+            </CurrentUserProvider>
+          </MessageThreadsProvider>
         </ReturnsDataProvider>
       </TooltipProvider>
     </BrowserRouter>

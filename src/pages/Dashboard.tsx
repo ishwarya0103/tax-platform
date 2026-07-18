@@ -3,6 +3,7 @@ import { Ban, CalendarClock, CalendarX2, ClipboardCheck, Search, type LucideIcon
 import { clients, teamMembers } from '../data'
 import { useCurrentUser } from '../context/CurrentUserContext'
 import { useReturnsData } from '../context/ReturnsDataContext'
+import { useMessageThreads } from '../context/MessageThreadsContext'
 import { daysUntilDue, scoreReturn } from '../lib/scoring'
 import { StatCard } from '../components/dashboard/StatCard'
 import { ReturnRow } from '../components/dashboard/ReturnRow'
@@ -61,6 +62,7 @@ function matchesSearch(ret: Return, clientName: string, query: string): boolean 
 export function Dashboard() {
   const { currentUser, setCurrentUserId } = useCurrentUser()
   const { returns } = useReturnsData()
+  const { messageThreads } = useMessageThreads()
   const [scope, setScope] = useState<Scope>('mine')
   const [statFilter, setStatFilter] = useState<StatKey | null>(null)
   const [query, setQuery] = useState('')
@@ -92,7 +94,10 @@ export function Dashboard() {
   if (isSearching) workingSet = workingSet.filter(({ ret, client }) => matchesSearch(ret, client.name, query))
 
   const scored = workingSet
-    .map((row) => ({ ...row, score: scoreReturn(row.ret) }))
+    .map((row) => {
+      const threads = messageThreads.filter((t) => t.returnId === row.ret.id)
+      return { ...row, threads, score: scoreReturn(row.ret, threads) }
+    })
     .sort((a, b) => b.score.total - a.score.total || daysUntilDue(a.ret) - daysUntilDue(b.ret))
 
   return (
@@ -175,8 +180,8 @@ export function Dashboard() {
           {scored.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-slate-400">No returns match your filters.</div>
           ) : (
-            scored.map(({ ret, client, preparer, reviewer, score }) => (
-              <ReturnRow key={ret.id} ret={ret} client={client} preparer={preparer} reviewer={reviewer} score={score} />
+            scored.map(({ ret, client, preparer, reviewer, score, threads }) => (
+              <ReturnRow key={ret.id} ret={ret} client={client} preparer={preparer} reviewer={reviewer} score={score} threads={threads} />
             ))
           )}
         </div>
