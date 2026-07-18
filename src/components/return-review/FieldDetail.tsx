@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { CheckCircle2, CircleAlert, FileText, Info, Lock, Pencil, type LucideIcon } from 'lucide-react'
+import { ArrowRight, CheckCircle2, CircleAlert, FileText, Info, Lock, Pencil, type LucideIcon } from 'lucide-react'
 import { documents } from '../../data'
-import { FieldStateBadge } from '../../design-system'
+import { FieldStateBadge, ThreadVisibilityBadge } from '../../design-system'
 import { formatDateTime } from '../../lib/format'
 import { valueAppearsInSnippet } from '../../lib/traceability'
-import type { EditHistoryEntry, FieldWarning, FieldWarningSeverity, ReturnField } from '../../types'
+import type { EditHistoryEntry, FieldWarning, FieldWarningSeverity, MessageThread, ReturnField } from '../../types'
 
 const WARNING_STYLES: Record<FieldWarningSeverity, { className: string; icon: LucideIcon }> = {
   critical: { className: 'border-rose-200 bg-rose-50 text-rose-800', icon: CircleAlert },
@@ -60,6 +60,32 @@ function TraceabilityCheck({ field }: { field: ReturnField }) {
       <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
       <span>Could not confirm this exact figure in the cited source</span>
     </div>
+  )
+}
+
+function RelatedConversation({ threads, onJumpToThread }: { threads: MessageThread[]; onJumpToThread: (threadId: string) => void }) {
+  if (threads.length === 0) return null
+  return (
+    <ul className="mt-2 space-y-2">
+      {threads.map((thread) => (
+        <li key={thread.id}>
+          <button
+            type="button"
+            onClick={() => onJumpToThread(thread.id)}
+            className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm hover:border-indigo-300 hover:bg-indigo-50"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <ThreadVisibilityBadge visibility={thread.visibility} />
+              <span className="truncate text-slate-700">{thread.subject}</span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-indigo-600">
+              View conversation
+              <ArrowRight className="size-3.5" aria-hidden="true" />
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -153,10 +179,12 @@ function ValueEditor({ field, onSave }: { field: ReturnField; onSave: (newValue:
 
 interface FieldDetailProps {
   field: ReturnField
+  relatedThreads: MessageThread[]
   onSave: (newValue: string) => void
+  onJumpToThread: (threadId: string) => void
 }
 
-export function FieldDetail({ field, onSave }: FieldDetailProps) {
+export function FieldDetail({ field, relatedThreads, onSave, onJumpToThread }: FieldDetailProps) {
   const source = field.source
   const document = source ? documents.find((d) => d.id === source.documentId) : undefined
 
@@ -229,6 +257,13 @@ export function FieldDetail({ field, onSave }: FieldDetailProps) {
                 {source.snippet}
               </blockquote>
             </div>
+          </section>
+        )}
+
+        {relatedThreads.length > 0 && (
+          <section className="mt-6">
+            <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Related conversation</h3>
+            <RelatedConversation threads={relatedThreads} onJumpToThread={onJumpToThread} />
           </section>
         )}
 

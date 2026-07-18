@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Ban, CalendarClock, CalendarX2, ClipboardCheck, Search, type LucideIcon } from 'lucide-react'
 import { clients, teamMembers } from '../data'
 import { useCurrentUser } from '../context/CurrentUserContext'
@@ -59,13 +60,33 @@ function matchesSearch(ret: Return, clientName: string, query: string): boolean 
   return clientName.toLowerCase().includes(q) || ret.id.toLowerCase().includes(q)
 }
 
+interface DashboardLocationState {
+  scope?: Scope
+  statFilter?: StatKey | null
+  query?: string
+}
+
 export function Dashboard() {
   const { currentUser, setCurrentUserId } = useCurrentUser()
   const { returns } = useReturnsData()
   const { messageThreads } = useMessageThreads()
-  const [scope, setScope] = useState<Scope>('mine')
-  const [statFilter, setStatFilter] = useState<StatKey | null>(null)
-  const [query, setQuery] = useState('')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const restored = location.state as DashboardLocationState | null
+  const [scope, setScope] = useState<Scope>(restored?.scope ?? 'mine')
+  const [statFilter, setStatFilter] = useState<StatKey | null>(restored?.statFilter ?? null)
+  const [query, setQuery] = useState(restored?.query ?? '')
+
+  // Keep the CURRENT history entry's state in sync with these filters as they
+  // change, so navigating back here (browser back, or the "Dashboard"
+  // breadcrumb elsewhere) restores this exact view instead of resetting to
+  // defaults. Deliberately not tracking scroll position the same way — native
+  // browser scroll restoration already handles that for a real back
+  // navigation (history.go(-1), which is what the breadcrumb uses).
+  useEffect(() => {
+    navigate(location.pathname, { replace: true, state: { scope, statFilter, query } })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope, statFilter, query])
 
   const enriched = returns.map((ret) => ({
     ret,

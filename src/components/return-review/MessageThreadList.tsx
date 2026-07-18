@@ -1,4 +1,4 @@
-import { CheckCircle2, RotateCcw } from 'lucide-react'
+import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
 import { ThreadStatusBadge, ThreadVisibilityBadge } from '../../design-system'
 import { formatDateTime } from '../../lib/format'
 import { nextActionOwner } from '../../lib/messages'
@@ -16,17 +16,33 @@ function NextActionLine({ thread }: { thread: MessageThread }) {
 
 interface MessageThreadCardProps {
   thread: MessageThread
-  relatedFieldLabel?: string
+  relatedField?: ReturnField
+  focused: boolean
   onToggleStatus: (threadId: string) => void
+  onJumpToField: (fieldId: string) => void
 }
 
-function MessageThreadCard({ thread, relatedFieldLabel, onToggleStatus }: MessageThreadCardProps) {
+function MessageThreadCard({ thread, relatedField, focused, onToggleStatus, onJumpToField }: MessageThreadCardProps) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div
+      id={`thread-${thread.id}`}
+      className={`scroll-mt-6 rounded-xl border bg-white p-4 transition-colors ${
+        focused ? 'border-indigo-300 ring-2 ring-indigo-200' : 'border-slate-200'
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium text-slate-900">{thread.subject}</p>
-          {relatedFieldLabel && <p className="text-xs text-slate-400">Re: {relatedFieldLabel}</p>}
+          {relatedField && (
+            <button
+              type="button"
+              onClick={() => onJumpToField(relatedField.id)}
+              className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
+            >
+              Re: {relatedField.label}
+              <ArrowRight className="size-3 shrink-0" aria-hidden="true" />
+            </button>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ThreadVisibilityBadge visibility={thread.visibility} />
@@ -72,10 +88,12 @@ function MessageThreadCard({ thread, relatedFieldLabel, onToggleStatus }: Messag
 interface MessageThreadListProps {
   threads: MessageThread[]
   fields: ReturnField[]
+  focusedThreadId?: string | null
   onToggleStatus: (threadId: string) => void
+  onJumpToField: (fieldId: string) => void
 }
 
-export function MessageThreadList({ threads, fields, onToggleStatus }: MessageThreadListProps) {
+export function MessageThreadList({ threads, fields, focusedThreadId, onToggleStatus, onJumpToField }: MessageThreadListProps) {
   if (threads.length === 0) return null
 
   const sorted = [...threads].sort((a, b) => {
@@ -84,7 +102,7 @@ export function MessageThreadList({ threads, fields, onToggleStatus }: MessageTh
   })
 
   return (
-    <section className="border-t border-slate-200 px-6 py-6">
+    <section id="messages-panel" className="scroll-mt-6 border-t border-slate-200 px-6 py-6">
       <h2 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Messages</h2>
       <div className="mt-3 space-y-3">
         {sorted.map((thread) => {
@@ -93,8 +111,10 @@ export function MessageThreadList({ threads, fields, onToggleStatus }: MessageTh
             <MessageThreadCard
               key={thread.id}
               thread={thread}
-              relatedFieldLabel={relatedField?.label}
+              relatedField={relatedField}
+              focused={thread.id === focusedThreadId}
               onToggleStatus={onToggleStatus}
+              onJumpToField={onJumpToField}
             />
           )
         })}
