@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { clients, teamMembers } from '../data'
+import { clients, documents, teamMembers } from '../data'
 import { useReturnsData } from '../context/ReturnsDataContext'
 import { useCurrentUser } from '../context/CurrentUserContext'
 import { useMessageThreads } from '../context/MessageThreadsContext'
@@ -10,6 +10,7 @@ import { Breadcrumbs, type BreadcrumbItem } from '../components/Breadcrumbs'
 import { FieldList } from '../components/return-review/FieldList'
 import { FieldDetail } from '../components/return-review/FieldDetail'
 import { MessageThreadList } from '../components/return-review/MessageThreadList'
+import { DocumentList } from '../components/return-review/DocumentList'
 import type { EditActorType, StaffRole } from '../types'
 
 function roleToActorType(role: StaffRole): EditActorType {
@@ -156,6 +157,8 @@ export function ReturnReview() {
         onToggleStatus={toggleThreadStatus}
         onJumpToField={jumpToField}
       />
+
+      <DocumentList documents={documents.filter((d) => d.returnId === ret.id)} />
     </div>
   )
 }

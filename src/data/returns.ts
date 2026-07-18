@@ -1,6 +1,8 @@
 import type { Return } from '../types'
+import { meridianReturn } from './generators/meridian'
 
 export const returns: Return[] = [
+  meridianReturn,
   // ── Sarah Chen — individual, W-2 employee ────────────────────────────────
   // Demonstrates: clean high-confidence extraction, verified, locked, client-provided.
   {

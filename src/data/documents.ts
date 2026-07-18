@@ -1,6 +1,8 @@
 import type { SourceDocument } from '../types'
+import { meridianDocuments } from './generators/meridian'
 
 export const documents: SourceDocument[] = [
+  ...meridianDocuments,
   // Sarah Chen
   {
     id: 'doc-sarah-w2',

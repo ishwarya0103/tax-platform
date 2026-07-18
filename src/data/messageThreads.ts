@@ -1,6 +1,8 @@
 import type { MessageThread } from '../types'
+import { meridianThreads } from './generators/meridian'
 
 export const messageThreads: MessageThread[] = [
+  ...meridianThreads,
   // ── Dana Ruiz — the requested scenario: asking for a clearer mileage photo ──
   {
     id: 'thread-dana-mileage-photo',

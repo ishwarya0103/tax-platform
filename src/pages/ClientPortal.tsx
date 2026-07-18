@@ -6,7 +6,7 @@ import { StageTimeline } from '../design-system'
 import { dueDateLabel, dueDateRelativeLabel } from '../lib/scoring'
 import { ENTITY_TYPE_LABELS } from '../lib/labels'
 import { threadsNeedingClientAction } from '../lib/messages'
-import { ClientFieldRow } from '../components/portal/ClientFieldRow'
+import { ClientFieldGroups } from '../components/portal/ClientFieldGroups'
 import { NewClientOnboarding } from '../components/portal/NewClientOnboarding'
 
 export function ClientPortal() {
@@ -84,10 +84,8 @@ export function ClientPortal() {
         {ret.fields.length > 0 && (
           <section className="mt-6">
             <h2 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Return details</h2>
-            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
-              {ret.fields.map((field) => (
-                <ClientFieldRow key={field.id} field={field} />
-              ))}
+            <div className="mt-2">
+              <ClientFieldGroups fields={ret.fields} />
             </div>
           </section>
         )}

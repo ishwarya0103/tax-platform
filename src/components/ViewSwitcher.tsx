@@ -11,6 +11,7 @@ const SAMPLE_CLIENT_LOGINS: { id: string; note?: string }[] = [
   { id: 'client-dana-ruiz' },
   { id: 'client-priya-nair', note: 'firm employee' },
   { id: 'client-new-horizons-bakery', note: 'new client' },
+  { id: 'client-meridian-hospitality', note: 'large business, ~280 fields' },
 ]
 
 export function ViewSwitcher() {

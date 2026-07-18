@@ -11,9 +11,10 @@ import {
   MessageCircleQuestion,
   CalendarClock,
   ClipboardCheck,
+  Clock,
   type LucideIcon,
 } from 'lucide-react'
-import type { FieldState, ReturnStatus } from '../types'
+import type { DocumentStatus, FieldState, ReturnStatus } from '../types'
 
 export interface StatusVisual {
   label: string
@@ -113,5 +114,26 @@ export const RETURN_STATUS_CONFIG: Record<ReturnStatus, StatusVisual> = {
     description: 'Filed with the relevant tax authority.',
     icon: CheckCircle2,
     className: emerald,
+  },
+}
+
+export const DOCUMENT_STATUS_CONFIG: Record<DocumentStatus, StatusVisual> = {
+  processing: {
+    label: 'Processing',
+    description: 'Uploaded, but the system has not finished reading it yet.',
+    icon: Clock,
+    className: sky,
+  },
+  processed: {
+    label: 'Processed',
+    description: 'Successfully read and available as a source for extraction.',
+    icon: CheckCircle2,
+    className: emerald,
+  },
+  'needs-attention': {
+    label: 'Needs attention',
+    description: "Couldn't be fully read (damaged, blurry, or unsupported) — needs a person to look at it.",
+    icon: CircleAlert,
+    className: amber,
   },
 }

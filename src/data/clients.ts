@@ -1,6 +1,8 @@
 import type { Client } from '../types'
+import { meridianClient } from './generators/meridian'
 
 export const clients: Client[] = [
+  meridianClient,
   {
     id: 'client-sarah-chen',
     name: 'Sarah Chen',
