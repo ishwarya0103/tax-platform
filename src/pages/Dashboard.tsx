@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Ban, CalendarClock, CalendarX2, ClipboardCheck, Search, type LucideIcon } from 'lucide-react'
+import { Ban, CalendarClock, CalendarX2, CheckCircle2, ClipboardCheck, Search, type LucideIcon } from 'lucide-react'
 import { clients, teamMembers } from '../data'
 import { useCurrentUser } from '../context/CurrentUserContext'
 import { useReturnsData } from '../context/ReturnsDataContext'
@@ -11,7 +11,7 @@ import { ReturnRow } from '../components/dashboard/ReturnRow'
 import type { Return } from '../types'
 
 type Scope = 'mine' | 'team'
-type StatKey = 'overdue' | 'dueThisWeek' | 'blocked' | 'readyToFile'
+type StatKey = 'overdue' | 'dueThisWeek' | 'blocked' | 'readyToFile' | 'filed'
 
 const STAT_PREDICATES: Record<StatKey, (ret: Return) => boolean> = {
   overdue: (ret) => daysUntilDue(ret) < 0,
@@ -21,6 +21,7 @@ const STAT_PREDICATES: Record<StatKey, (ret: Return) => boolean> = {
   },
   blocked: (ret) => ret.blockingIssues.some((issue) => !issue.resolved),
   readyToFile: (ret) => ret.status === 'ready-to-file',
+  filed: (ret) => ret.status === 'filed',
 }
 
 const STAT_CARDS: { key: StatKey; label: string; icon: LucideIcon; activeClassName: string; iconClassName: string }[] = [
@@ -51,6 +52,13 @@ const STAT_CARDS: { key: StatKey; label: string; icon: LucideIcon; activeClassNa
     icon: ClipboardCheck,
     activeClassName: 'border-teal-300 bg-teal-50 ring-1 ring-teal-300',
     iconClassName: 'text-teal-600',
+  },
+  {
+    key: 'filed',
+    label: 'Filed',
+    icon: CheckCircle2,
+    activeClassName: 'border-emerald-300 bg-emerald-50 ring-1 ring-emerald-300',
+    iconClassName: 'text-emerald-600',
   },
 ]
 
@@ -106,11 +114,20 @@ export function Dashboard() {
     dueThisWeek: activeScoped.filter(({ ret }) => STAT_PREDICATES.dueThisWeek(ret)).length,
     blocked: activeScoped.filter(({ ret }) => STAT_PREDICATES.blocked(ret)).length,
     readyToFile: activeScoped.filter(({ ret }) => STAT_PREDICATES.readyToFile(ret)).length,
+    // Counted against `scoped`, not `activeScoped` — filed returns are exactly
+    // what activeScoped excludes, so this is the one count that has to look
+    // past it to have anything to show.
+    filed: scoped.filter(({ ret }) => STAT_PREDICATES.filed(ret)).length,
   }
 
   const isSearching = query.trim().length > 0
+  // Filed returns are hidden by default (activeScoped excludes them) so a
+  // long-since-finished return doesn't clutter the "what needs attention"
+  // list — but searching or explicitly clicking "Filed" are both real,
+  // discoverable ways to see them.
+  const showFiled = isSearching || statFilter === 'filed'
 
-  let workingSet = isSearching ? scoped : activeScoped
+  let workingSet = showFiled ? scoped : activeScoped
   if (statFilter) workingSet = workingSet.filter(({ ret }) => STAT_PREDICATES[statFilter](ret))
   if (isSearching) workingSet = workingSet.filter(({ ret, client }) => matchesSearch(ret, client.name, query))
 
@@ -166,7 +183,7 @@ export function Dashboard() {
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
           {STAT_CARDS.map((card) => (
             <StatCard
               key={card.key}
@@ -194,7 +211,7 @@ export function Dashboard() {
 
         <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
           <span>Sorted by priority — highest first.</span>
-          {!isSearching && <span>Filed returns are hidden here. Search to find one.</span>}
+          {!showFiled && <span>Filed returns are hidden here — click "Filed" above to see them.</span>}
         </div>
 
         <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">

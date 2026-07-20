@@ -29,3 +29,6 @@ coverage
 
 # Local session-continuity log, not part of project history
 PROGRESS.md
+
+# Local walking-tour reference doc, not part of project history
+ORIENTATION.md
